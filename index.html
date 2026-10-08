@@ -1,0 +1,316 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>AI Cloak Studio</title>
+<style>
+  /* Layout: one working column, image rail of 3 canvases + a control stack below */
+  :root{
+    --bg:#0f1115; --panel:#171a21; --panel-2:#1f232c; --line:#2a2f3a;
+    --fg:#e8eaf0; --muted:#9aa3b2; --accent:#4de0c3; --accent-2:#f2a65a;
+    --danger:#ff6b6b; --radius:14px;
+    --mono:'DM Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+    --sans:'Sarabun','Noto Sans Thai',system-ui,-apple-system,sans-serif;
+    color-scheme:dark;
+  }
+  :root[data-theme="light"]{
+    --bg:#f4f5f7; --panel:#ffffff; --panel-2:#eef0f4; --line:#dcdfe6;
+    --fg:#1a1d24; --muted:#5c6472; --accent:#0f9b84; --accent-2:#c06a1f;
+    color-scheme:light;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--sans);line-height:1.55}
+  .wrap{max-width:1040px;margin:0 auto;padding-block:28px;padding-left:16px;padding-right:16px}
+  header h1{font-size:1.5rem;margin:0 0 4px;letter-spacing:-.01em}
+  header p{margin:0;color:var(--muted);font-size:.92rem;max-width:62ch}
+  .tag{display:inline-block;font-family:var(--mono);font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);border:1px solid var(--line);border-radius:999px;padding:3px 10px;margin-bottom:12px}
+
+  .drop{margin-top:20px;border:1.5px dashed var(--line);border-radius:var(--radius);background:var(--panel);
+    padding:34px 20px;text-align:center;cursor:pointer;transition:border-color .15s,background .15s}
+  .drop:hover,.drop.hot{border-color:var(--accent);background:var(--panel-2)}
+  .drop strong{color:var(--fg)} .drop span{color:var(--muted);font-size:.9rem}
+
+  .rail{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:20px}
+  .frame{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:10px;min-width:0;display:flex;flex-direction:column}
+  .frame h3{margin:0 0 8px;font-size:.78rem;font-family:var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);display:flex;align-items:center;gap:7px}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--muted)}
+  .frame.orig .dot{background:#6b7280}.frame.prot .dot{background:var(--accent)}.frame.fb .dot{background:var(--accent-2)}
+  .cv-box{position:relative;background:var(--panel-2);border-radius:8px;overflow:hidden;aspect-ratio:1/1;display:flex;align-items:center;justify-content:center}
+  canvas{max-width:100%;max-height:100%;display:block}
+  .cv-box .empty{color:var(--muted);font-size:.8rem;position:absolute}
+
+  .controls{margin-top:20px;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:18px}
+  .ctl{margin-bottom:16px}
+  .ctl:last-child{margin-bottom:0}
+  .ctl label{display:flex;justify-content:space-between;align-items:baseline;font-size:.9rem;margin-bottom:6px}
+  .ctl label .val{font-family:var(--mono);color:var(--accent);font-size:.85rem}
+  .ctl .hint{color:var(--muted);font-size:.78rem;margin-top:3px}
+  input[type=range]{width:100%;accent-color:var(--accent);height:4px}
+  .row{display:flex;gap:10px;flex-wrap:wrap}
+  .chk{display:flex;align-items:center;gap:8px;font-size:.88rem;background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:9px 12px;cursor:pointer;flex:1;min-width:150px}
+  .chk input{accent-color:var(--accent);width:16px;height:16px}
+
+  .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
+  button{font-family:var(--sans);font-size:.92rem;font-weight:600;border:none;border-radius:10px;padding:11px 18px;cursor:pointer;transition:transform .08s,filter .15s}
+  button:active{transform:translateY(1px)}
+  button:disabled{opacity:.4;cursor:not-allowed}
+  .btn-primary{background:var(--accent);color:#06140f}
+  .btn-ghost{background:var(--panel-2);color:var(--fg);border:1px solid var(--line)}
+  .btn-fb{background:var(--accent-2);color:#1a0f03}
+
+  .meta{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}
+  .stat{background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+  .stat b{display:block;font-family:var(--mono);font-size:1.1rem;color:var(--fg)}
+  .stat small{color:var(--muted);font-size:.72rem;text-transform:uppercase;letter-spacing:.05em}
+
+  .note{margin-top:22px;background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--accent-2);border-radius:10px;padding:14px 16px;font-size:.84rem;color:var(--muted)}
+  .note b{color:var(--fg)}
+  footer{margin-top:24px;color:var(--muted);font-size:.76rem;text-align:center}
+  .themebtn{position:fixed;top:calc(12px + env(safe-area-inset-top,0px));right:14px;background:var(--panel);border:1px solid var(--line);color:var(--muted);border-radius:8px;padding:6px 10px;font-size:.75rem;cursor:pointer;z-index:9}
+  @media(max-width:640px){.rail{grid-template-columns:1fr;gap:10px}.meta{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<button class="themebtn" id="theme">◐ ธีม</button>
+<div class="wrap">
+  <header>
+    <span class="tag">Client-side · ภาพไม่ออกจากเครื่อง</span>
+    <h1>AI Cloak Studio</h1>
+    <p>ใส่ชั้นรบกวนที่ตามนุษย์แทบมองไม่เห็น เพื่อลดความแม่นของระบบอ่านภาพอัตโนมัติ ภาพถูกประมวลผลในเบราว์เซอร์ทั้งหมด ไม่มีการอัปโหลดขึ้นเซิร์ฟเวอร์ใด ๆ</p>
+  </header>
+
+  <div class="drop" id="drop" tabindex="0" role="button" aria-label="อัปโหลดภาพ">
+    <strong>ลากภาพมาวาง</strong> หรือคลิกเพื่อเลือกไฟล์<br>
+    <span>รองรับ JPG / PNG / WebP — แนะนำภาพ portrait</span>
+    <input type="file" id="file" accept="image/*" hidden>
+  </div>
+
+  <div class="rail">
+    <div class="frame orig">
+      <h3><span class="dot"></span> ต้นฉบับ</h3>
+      <div class="cv-box"><canvas id="cv-orig"></canvas><span class="empty" id="e1">ยังไม่มีภาพ</span></div>
+    </div>
+    <div class="frame prot">
+      <h3><span class="dot"></span> หลังใส่ชั้นกวน</h3>
+      <div class="cv-box"><canvas id="cv-prot"></canvas><span class="empty" id="e2">รอประมวลผล</span></div>
+    </div>
+    <div class="frame fb">
+      <h3><span class="dot"></span> จำลองผ่าน Facebook</h3>
+      <div class="cv-box"><canvas id="cv-fb"></canvas><span class="empty" id="e3">กดปุ่มจำลอง</span></div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <div class="ctl">
+      <label>ความแรงของชั้นกวน (ε) <span class="val" id="vEps">8 / 255</span></label>
+      <input type="range" id="eps" min="2" max="24" value="8" step="1">
+      <div class="hint">ยิ่งสูงยิ่งกวนเอไอได้มาก แต่เริ่มเห็น noise ด้วยตาเปล่า — portrait แนะนำ 6–12</div>
+    </div>
+    <div class="ctl">
+      <label>ขนาด patch grid (px) <span class="val" id="vGrid">14</span></label>
+      <input type="range" id="grid" min="8" max="24" value="14" step="1">
+      <div class="hint">เล็งกวนจุดที่ vision encoder ตัดภาพเป็นช่อง (ViT ≈ 14–16px)</div>
+    </div>
+    <div class="ctl">
+      <div class="row">
+        <label class="chk"><input type="checkbox" id="mNoise" checked> High-freq noise</label>
+        <label class="chk"><input type="checkbox" id="mGrid" checked> Patch-grid กวน</label>
+        <label class="chk"><input type="checkbox" id="mWarp"> Micro-warp (คลื่น)</label>
+      </div>
+      <div class="hint" style="margin-top:8px">Micro-warp = บิดพิกเซลระดับต่ำกว่า 1px ทนการบีบอัดได้ดีกว่า noise แต่ถ้าแรงไปใบหน้าจะเริ่มเพี้ยน</div>
+    </div>
+
+    <div class="actions">
+      <button class="btn-primary" id="apply" disabled>ใส่ชั้นกวน</button>
+      <button class="btn-fb" id="simfb" disabled>จำลองผ่าน Facebook</button>
+      <button class="btn-ghost" id="dlProt" disabled>ดาวน์โหลดภาพกวน (PNG)</button>
+      <button class="btn-ghost" id="dlFb" disabled>ดาวน์โหลดภาพหลัง FB (JPG)</button>
+    </div>
+
+    <div class="meta">
+      <div class="stat"><small>ความต่างจากต้นฉบับ (PSNR)</small><b id="sPsnr">—</b></div>
+      <div class="stat"><small>พิกเซลที่ถูกแตะ</small><b id="sTouched">—</b></div>
+    </div>
+  </div>
+
+  <div class="note">
+    <b>อ่านก่อนใช้จริง:</b> เครื่องมือนี้เป็น <b>ชั้นเสริม ไม่ใช่เกราะรับประกัน</b> — ระบบอ่านภาพของ Facebook บีบอัดและย่อภาพทุกใบ ชั้นกวนบางส่วนจะหายไป ให้ใช้ปุ่ม “จำลองผ่าน Facebook” ตรวจเสมอว่าหลังบีบอัดภาพยังกวนเอไอได้พอ สำหรับข้อมูลลับลูกค้าจริง ควรใช้คู่กับการปิดข้อมูลระบุตัวตน (redact) และช่องทางส่งที่เข้ารหัส ไม่ควรพึ่งชั้นกวนอย่างเดียว
+  </div>
+
+  <footer>ทุกการประมวลผลเกิดบนเครื่องคุณ — ปิดอินเทอร์เน็ตแล้วยังใช้งานได้ · วางไฟล์นี้บน GitHub Pages ได้ทันที</footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  const $=id=>document.getElementById(id);
+  const cvO=$('cv-orig'),cvP=$('cv-prot'),cvF=$('cv-fb');
+  let imgData=null, img=null, protBlob=null, fbBlob=null, protCanvas=null;
+
+  // theme toggle (per-viewer)
+  try{const t=localStorage.getItem('cloak-theme'); if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}
+  $('theme').onclick=()=>{
+    const cur=document.documentElement.getAttribute('data-theme')==='light'?'light':'dark';
+    const nxt=cur==='light'?'dark':'light';
+    document.documentElement.setAttribute('data-theme',nxt);
+    try{localStorage.setItem('cloak-theme',nxt);}catch(e){}
+  };
+
+  // ---- load image ----
+  const drop=$('drop'),file=$('file');
+  drop.onclick=()=>file.click();
+  drop.onkeydown=e=>{if(e.key==='Enter'||e.key===' ')file.click();};
+  ['dragover','dragenter'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.add('hot');}));
+  ['dragleave','drop'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove('hot');}));
+  drop.addEventListener('drop',e=>{if(e.dataTransfer.files[0])loadFile(e.dataTransfer.files[0]);});
+  file.onchange=e=>{if(e.target.files[0])loadFile(e.target.files[0]);};
+
+  function loadFile(f){
+    if(!f.type.startsWith('image/'))return;
+    const r=new FileReader();
+    r.onload=()=>{
+      img=new Image();
+      img.onload=()=>{
+        // cap long side at 2048 for sane processing, keep aspect
+        const MAX=2048; let w=img.width,h=img.height;
+        if(Math.max(w,h)>MAX){const s=MAX/Math.max(w,h);w=Math.round(w*s);h=Math.round(h*s);}
+        [cvO,cvP,cvF].forEach(c=>{c.width=w;c.height=h;});
+        const ctx=cvO.getContext('2d'); ctx.drawImage(img,0,0,w,h);
+        imgData=ctx.getImageData(0,0,w,h);
+        $('e1').hidden=true;$('e2').hidden=false;$('e3').hidden=false;
+        // clear downstream
+        cvP.getContext('2d').clearRect(0,0,w,h);
+        cvF.getContext('2d').clearRect(0,0,w,h);
+        $('e2').textContent='รอประมวลผล';$('e3').textContent='กดปุ่มจำลอง';
+        protBlob=fbBlob=null;
+        $('apply').disabled=false; $('simfb').disabled=true;
+        $('dlProt').disabled=true; $('dlFb').disabled=true;
+        $('sPsnr').textContent='—';$('sTouched').textContent='—';
+      };
+      img.src=r.result;
+    };
+    r.readAsDataURL(f);
+  }
+
+  // slider labels
+  $('eps').oninput=e=>$('vEps').textContent=e.target.value+' / 255';
+  $('grid').oninput=e=>$('vGrid').textContent=e.target.value;
+
+  // seeded PRNG so each image is deterministic per run
+  function rng(seed){let s=seed>>>0;return()=>{s=(s*1664525+1013904223)>>>0;return s/4294967296;};}
+
+  // ---- core: apply cloak ----
+  $('apply').onclick=()=>{
+    if(!imgData)return;
+    const w=cvO.width,h=cvO.height;
+    const eps=+$('eps').value, grid=+$('grid').value;
+    const useNoise=$('mNoise').checked,useGrid=$('mGrid').checked,useWarp=$('mWarp').checked;
+    const src=imgData.data;
+    const out=new Uint8ClampedArray(src); // start from original
+    const rand=rng(0x9e3779b1 ^ (w*73856093) ^ (h*19349663));
+    let touched=0;
+
+    // 1) micro-warp first (geometric), sample from source
+    if(useWarp){
+      const amp=Math.min(0.9, eps/14); // sub-pixel displacement
+      const tmp=new Uint8ClampedArray(src);
+      for(let y=0;y<h;y++){
+        for(let x=0;x<w;x++){
+          const dx=amp*Math.sin((y/7.0)+(x/23.0));
+          const dy=amp*Math.cos((x/9.0)+(y/19.0));
+          const sx=Math.min(w-1,Math.max(0,Math.round(x+dx)));
+          const sy=Math.min(h-1,Math.max(0,Math.round(y+dy)));
+          const di=(y*w+x)*4, si=(sy*w+sx)*4;
+          tmp[di]=src[si];tmp[di+1]=src[si+1];tmp[di+2]=src[si+2];tmp[di+3]=src[si+3];
+        }
+      }
+      out.set(tmp);
+    }
+
+    // 2) high-freq noise + 3) patch-grid emphasis, in one pixel pass
+    for(let y=0;y<h;y++){
+      for(let x=0;x<w;x++){
+        const i=(y*w+x)*4;
+        let n0=0,n1=0,n2=0,changed=false;
+        if(useNoise){
+          // signed noise bounded by eps, biased to high frequency via checker sign
+          const chk=((x+y)&1)?1:-1;
+          n0+=chk*Math.round((rand()*2-1)*eps);
+          n1+=chk*Math.round((rand()*2-1)*eps);
+          n2+=chk*Math.round((rand()*2-1)*eps);
+          changed=true;
+        }
+        if(useGrid){
+          // stronger nudge right on patch boundaries (where tokenizer cuts)
+          if(x%grid===0 || y%grid===0){
+            const g=Math.round((rand()*2-1)*eps*1.5);
+            n0+=g;n1+=g;n2+=g;changed=true;
+          }
+        }
+        if(changed){
+          out[i]=clamp(out[i]+n0);
+          out[i+1]=clamp(out[i+1]+n1);
+          out[i+2]=clamp(out[i+2]+n2);
+          touched++;
+        }
+      }
+    }
+
+    const od=new ImageData(out,w,h);
+    protCanvas=document.createElement('canvas');protCanvas.width=w;protCanvas.height=h;
+    protCanvas.getContext('2d').putImageData(od,0,0);
+    cvP.getContext('2d').putImageData(od,0,0);
+    $('e2').hidden=true;
+
+    // stats
+    $('sPsnr').textContent=psnr(src,out).toFixed(1)+' dB';
+    $('sTouched').textContent=Math.round(touched/(w*h)*100)+' %';
+
+    protCanvas.toBlob(b=>{protBlob=b;$('dlProt').disabled=false;},'image/png');
+    $('simfb').disabled=false;
+    $('dlFb').disabled=true; fbBlob=null;
+    $('e3').textContent='กดปุ่มจำลอง';
+    cvF.getContext('2d').clearRect(0,0,w,h);
+  };
+
+  function clamp(v){return v<0?0:v>255?255:v;}
+  function psnr(a,b){let mse=0,n=0;for(let i=0;i<a.length;i+=4){for(let k=0;k<3;k++){const d=a[i+k]-b[i+k];mse+=d*d;n++;}}mse/=n;return mse===0?99:10*Math.log10(255*255/mse);}
+
+  // ---- simulate Facebook pipeline: downscale + JPEG recompress ----
+  $('simfb').onclick=()=>{
+    if(!protCanvas)return;
+    const w=protCanvas.width,h=protCanvas.height;
+    // FB typically caps long side ~2048 and re-encodes JPEG ~71-85 quality
+    const FBMAX=2048; let tw=w,th=h;
+    if(Math.max(w,h)>FBMAX){const s=FBMAX/Math.max(w,h);tw=Math.round(w*s);th=Math.round(h*s);}
+    const tmp=document.createElement('canvas');tmp.width=tw;tmp.height=th;
+    const tctx=tmp.getContext('2d');tctx.imageSmoothingQuality='high';
+    tctx.drawImage(protCanvas,0,0,tw,th);
+    tmp.toBlob(b=>{
+      fbBlob=b;
+      const u=URL.createObjectURL(b);const im=new Image();
+      im.onload=()=>{
+        cvF.width=tw;cvF.height=th;
+        cvF.getContext('2d').drawImage(im,0,0);
+        $('e3').hidden=true;
+        $('dlFb').disabled=false;
+        URL.revokeObjectURL(u);
+      };
+      im.src=u;
+    },'image/jpeg',0.78);
+  };
+
+  // ---- downloads ----
+  function dl(blob,name){
+    if(!blob)return;
+    const u=URL.createObjectURL(blob);const a=document.createElement('a');
+    a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();
+    setTimeout(()=>URL.revokeObjectURL(u),1500);
+  }
+  $('dlProt').onclick=()=>dl(protBlob,'cloaked.png');
+  $('dlFb').onclick=()=>dl(fbBlob,'cloaked_fb.jpg');
+})();
+</script>
+</body>
+</html>
