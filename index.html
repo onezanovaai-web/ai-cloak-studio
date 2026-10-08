@@ -86,6 +86,7 @@
   .card .thumb{position:relative;aspect-ratio:1/1;background:var(--panel-2);display:flex;align-items:center;justify-content:center;cursor:pointer;user-select:none}
   .card .thumb img{width:100%;height:100%;object-fit:contain;pointer-events:none}
   .card .dlbtn{position:absolute;right:7px;bottom:7px;background:rgba(0,0,0,.6);color:#fff;border:none;border-radius:8px;padding:6px 9px;font-size:.72rem;cursor:pointer;display:flex;gap:4px;align-items:center}
+  .card .badge{position:absolute;left:7px;top:7px;background:rgba(0,0,0,.55);color:#fff;border-radius:7px;padding:3px 8px;font-size:.68rem}
   .card .nm{font-size:.72rem;color:var(--muted);padding:7px 9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .card .busy{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.45);color:#fff;font-size:.78rem}
   .flash{position:absolute;inset:0;background:var(--accent);opacity:0;pointer-events:none;transition:opacity .1s}
@@ -406,23 +407,24 @@ $('run').onclick=async()=>{
   $('run').disabled=false;$('run').textContent='ประมวลผลทั้งหมด';$('zip').disabled=items.length===0;
 };
 
-function refresh(){$('count').textContent=items.length+' ภาพ';}
+function refresh(){$('count').textContent=items.length+' ภาพ';if(items.length){$('results').hidden=false;renderGrid();}else{$('results').hidden=true;}}
 function renderGrid(){
   const g=$('grid');g.innerHTML='';
   items.forEach((it,idx)=>{
-    if(!it.out)return;
     const card=document.createElement('div');card.className='card';
-    const url=URL.createObjectURL(it.blob);
-    card.innerHTML=`<div class="thumb"><img src="${url}"><div class="flash"></div><button class="dlbtn">⬇ โหลด</button></div><div class="nm">${it.name}_cloaked.jpg</div>`;
-    const thumb=card.querySelector('.thumb'),flash=card.querySelector('.flash');
-    const doDl=()=>{dlOne(it);flash.style.opacity=.5;setTimeout(()=>flash.style.opacity=0,120);};
-    card.querySelector('.dlbtn').onclick=e=>{e.stopPropagation();doDl();};
-    // long-press + tap
-    let timer=null,moved=false;
-    thumb.addEventListener('pointerdown',()=>{moved=false;timer=setTimeout(()=>{doDl();timer=null;},500);});
-    thumb.addEventListener('pointermove',()=>{moved=true;});
-    ['pointerup','pointerleave','pointercancel'].forEach(ev=>thumb.addEventListener(ev,()=>{if(timer){clearTimeout(timer);if(ev==='pointerup'&&!moved)doDl();timer=null;}}));
-    thumb.addEventListener('contextmenu',e=>{e.preventDefault();doDl();});
+    const done=!!it.out;
+    const url=done?URL.createObjectURL(it.blob):it.src.toDataURL('image/jpeg',0.8);
+    card.innerHTML=`<div class="thumb"><img src="${url}"><div class="flash"></div>${done?'<button class="dlbtn">⬇ โหลด</button>':'<div class="badge">รอประมวลผล</div>'}</div><div class="nm">${it.name}${done?'_cloaked':''}.jpg</div>`;
+    if(done){
+      const thumb=card.querySelector('.thumb'),flash=card.querySelector('.flash');
+      const doDl=()=>{dlOne(it);flash.style.opacity=.5;setTimeout(()=>flash.style.opacity=0,120);};
+      card.querySelector('.dlbtn').onclick=e=>{e.stopPropagation();doDl();};
+      let timer=null,moved=false;
+      thumb.addEventListener('pointerdown',()=>{moved=false;timer=setTimeout(()=>{doDl();timer=null;},500);});
+      thumb.addEventListener('pointermove',()=>{moved=true;});
+      ['pointerup','pointerleave','pointercancel'].forEach(ev=>thumb.addEventListener(ev,()=>{if(timer){clearTimeout(timer);if(ev==='pointerup'&&!moved)doDl();timer=null;}}));
+      thumb.addEventListener('contextmenu',e=>{e.preventDefault();doDl();});
+    }
     g.appendChild(card);
   });
 }
