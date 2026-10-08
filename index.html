@@ -5,12 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>AI Cloak Studio</title>
 <style>
-  /* Layout: one working column, image rail of 3 canvases + a control stack below */
   :root{
     --bg:#0f1115; --panel:#171a21; --panel-2:#1f232c; --line:#2a2f3a;
     --fg:#e8eaf0; --muted:#9aa3b2; --accent:#4de0c3; --accent-2:#f2a65a;
     --danger:#ff6b6b; --radius:14px;
-    --mono:'DM Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+    --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
     --sans:'Sarabun','Noto Sans Thai',system-ui,-apple-system,sans-serif;
     color-scheme:dark;
   }
@@ -20,55 +19,82 @@
     color-scheme:light;
   }
   *{box-sizing:border-box}
-  body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--sans);line-height:1.55}
-  .wrap{max-width:1040px;margin:0 auto;padding-block:28px;padding-left:16px;padding-right:16px}
-  header h1{font-size:1.5rem;margin:0 0 4px;letter-spacing:-.01em}
-  header p{margin:0;color:var(--muted);font-size:.92rem;max-width:62ch}
-  .tag{display:inline-block;font-family:var(--mono);font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);border:1px solid var(--line);border-radius:999px;padding:3px 10px;margin-bottom:12px}
+  body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--sans);line-height:1.5;-webkit-tap-highlight-color:transparent}
+  .wrap{max-width:1100px;margin:0 auto;padding-block:22px;padding-left:16px;padding-right:16px}
+  header h1{font-size:1.4rem;margin:0 0 2px;letter-spacing:-.01em}
+  header p{margin:0;color:var(--muted);font-size:.88rem;max-width:64ch}
+  .tag{display:inline-block;font-family:var(--mono);font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);border:1px solid var(--line);border-radius:999px;padding:3px 10px;margin-bottom:10px}
 
-  .drop{margin-top:20px;border:1.5px dashed var(--line);border-radius:var(--radius);background:var(--panel);
-    padding:34px 20px;text-align:center;cursor:pointer;transition:border-color .15s,background .15s}
+  /* upload */
+  .drop{margin-top:16px;border:1.5px dashed var(--line);border-radius:var(--radius);background:var(--panel);
+    padding:22px 16px;text-align:center;cursor:pointer;transition:border-color .15s,background .15s}
   .drop:hover,.drop.hot{border-color:var(--accent);background:var(--panel-2)}
-  .drop strong{color:var(--fg)} .drop span{color:var(--muted);font-size:.9rem}
+  .drop strong{color:var(--fg)} .drop span{color:var(--muted);font-size:.86rem}
 
-  .rail{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:20px}
-  .frame{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:10px;min-width:0;display:flex;flex-direction:column}
-  .frame h3{margin:0 0 8px;font-size:.78rem;font-family:var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);display:flex;align-items:center;gap:7px}
-  .dot{width:8px;height:8px;border-radius:50%;background:var(--muted)}
-  .frame.orig .dot{background:#6b7280}.frame.prot .dot{background:var(--accent)}.frame.fb .dot{background:var(--accent-2)}
-  .cv-box{position:relative;background:var(--panel-2);border-radius:8px;overflow:hidden;aspect-ratio:1/1;display:flex;align-items:center;justify-content:center}
-  canvas{max-width:100%;max-height:100%;display:block}
-  .cv-box .empty{color:var(--muted);font-size:.8rem;position:absolute}
+  /* control panel on top */
+  .panel{margin-top:16px;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:16px}
+  .tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+  .tab{font-family:var(--sans);font-size:.85rem;font-weight:600;background:var(--panel-2);color:var(--muted);
+    border:1px solid var(--line);border-radius:10px;padding:8px 13px;cursor:pointer}
+  .tab.on{background:var(--accent);color:#06140f;border-color:var(--accent)}
+  .sect{display:none} .sect.on{display:block}
 
-  .controls{margin-top:20px;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:18px}
-  .ctl{margin-bottom:16px}
-  .ctl:last-child{margin-bottom:0}
-  .ctl label{display:flex;justify-content:space-between;align-items:baseline;font-size:.9rem;margin-bottom:6px}
-  .ctl label .val{font-family:var(--mono);color:var(--accent);font-size:.85rem}
-  .ctl .hint{color:var(--muted);font-size:.78rem;margin-top:3px}
+  .ctl{margin-bottom:13px} .ctl:last-child{margin-bottom:0}
+  .ctl label{display:flex;justify-content:space-between;align-items:baseline;font-size:.86rem;margin-bottom:5px}
+  .ctl label .val{font-family:var(--mono);color:var(--accent);font-size:.8rem}
+  .ctl .hint{color:var(--muted);font-size:.76rem;margin-top:3px}
   input[type=range]{width:100%;accent-color:var(--accent);height:4px}
-  .row{display:flex;gap:10px;flex-wrap:wrap}
-  .chk{display:flex;align-items:center;gap:8px;font-size:.88rem;background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:9px 12px;cursor:pointer;flex:1;min-width:150px}
-  .chk input{accent-color:var(--accent);width:16px;height:16px}
+  input[type=text]{width:100%;background:var(--panel-2);border:1px solid var(--line);color:var(--fg);border-radius:9px;padding:9px 11px;font-family:var(--sans);font-size:.9rem}
+  .row{display:flex;gap:8px;flex-wrap:wrap}
+  .chk{display:flex;align-items:center;gap:7px;font-size:.84rem;background:var(--panel-2);border:1px solid var(--line);border-radius:9px;padding:8px 11px;cursor:pointer;flex:1;min-width:130px}
+  .chk input{accent-color:var(--accent);width:15px;height:15px}
 
-  .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
-  button{font-family:var(--sans);font-size:.92rem;font-weight:600;border:none;border-radius:10px;padding:11px 18px;cursor:pointer;transition:transform .08s,filter .15s}
-  button:active{transform:translateY(1px)}
-  button:disabled{opacity:.4;cursor:not-allowed}
+  /* color presets */
+  .presets{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px}
+  .preset{border:1px solid var(--line);border-radius:10px;overflow:hidden;cursor:pointer;background:var(--panel-2);transition:transform .08s,border-color .15s}
+  .preset:active{transform:scale(.97)}
+  .preset.on{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+  .preset .sw{height:42px}
+  .preset .nm{font-size:.72rem;padding:5px 6px;text-align:center;color:var(--fg)}
+
+  /* watermark position picker */
+  .posgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;max-width:150px;margin-top:4px}
+  .posgrid button{aspect-ratio:1.4/1;background:var(--panel-2);border:1px solid var(--line);border-radius:7px;cursor:pointer;padding:0}
+  .posgrid button.on{background:var(--accent);border-color:var(--accent)}
+  .seg{display:flex;gap:6px;margin-bottom:10px}
+  .seg button{flex:1;font-family:var(--sans);font-size:.82rem;font-weight:600;background:var(--panel-2);color:var(--muted);border:1px solid var(--line);border-radius:9px;padding:8px;cursor:pointer}
+  .seg button.on{background:var(--accent);color:#06140f;border-color:var(--accent)}
+  .sigprev{margin-top:8px;height:60px;background:repeating-conic-gradient(#888 0% 25%,transparent 0% 50%) 0/14px 14px;border:1px solid var(--line);border-radius:8px;display:flex;align-items:center;justify-content:center;overflow:hidden}
+  .sigprev img{max-height:100%;max-width:100%}
+  .sigprev span{color:var(--muted);font-size:.76rem}
+
+  /* action bar */
+  .bar{display:flex;gap:9px;flex-wrap:wrap;margin-top:16px;align-items:center}
+  button.act{font-family:var(--sans);font-size:.9rem;font-weight:700;border:none;border-radius:10px;padding:12px 20px;cursor:pointer;transition:transform .08s,filter .15s}
+  button.act:active{transform:translateY(1px)}
+  button.act:disabled{opacity:.4;cursor:not-allowed}
   .btn-primary{background:var(--accent);color:#06140f}
+  .btn-zip{background:var(--accent-2);color:#1a0f03}
   .btn-ghost{background:var(--panel-2);color:var(--fg);border:1px solid var(--line)}
-  .btn-fb{background:var(--accent-2);color:#1a0f03}
+  .count{color:var(--muted);font-size:.82rem;margin-left:auto}
 
-  .meta{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}
-  .stat{background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
-  .stat b{display:block;font-family:var(--mono);font-size:1.1rem;color:var(--fg)}
-  .stat small{color:var(--muted);font-size:.72rem;text-transform:uppercase;letter-spacing:.05em}
+  /* results */
+  .results{margin-top:20px}
+  .results h2{font-size:1rem;margin:0 0 4px} .results .sub{color:var(--muted);font-size:.8rem;margin:0 0 12px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden;position:relative}
+  .card .thumb{position:relative;aspect-ratio:1/1;background:var(--panel-2);display:flex;align-items:center;justify-content:center;cursor:pointer;user-select:none}
+  .card .thumb img{width:100%;height:100%;object-fit:contain;pointer-events:none}
+  .card .dlbtn{position:absolute;right:7px;bottom:7px;background:rgba(0,0,0,.6);color:#fff;border:none;border-radius:8px;padding:6px 9px;font-size:.72rem;cursor:pointer;display:flex;gap:4px;align-items:center}
+  .card .nm{font-size:.72rem;color:var(--muted);padding:7px 9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .card .busy{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.45);color:#fff;font-size:.78rem}
+  .flash{position:absolute;inset:0;background:var(--accent);opacity:0;pointer-events:none;transition:opacity .1s}
 
-  .note{margin-top:22px;background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--accent-2);border-radius:10px;padding:14px 16px;font-size:.84rem;color:var(--muted)}
+  .note{margin-top:18px;background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--accent-2);border-radius:10px;padding:12px 14px;font-size:.8rem;color:var(--muted)}
   .note b{color:var(--fg)}
-  footer{margin-top:24px;color:var(--muted);font-size:.76rem;text-align:center}
-  .themebtn{position:fixed;top:calc(12px + env(safe-area-inset-top,0px));right:14px;background:var(--panel);border:1px solid var(--line);color:var(--muted);border-radius:8px;padding:6px 10px;font-size:.75rem;cursor:pointer;z-index:9}
-  @media(max-width:640px){.rail{grid-template-columns:1fr;gap:10px}.meta{grid-template-columns:1fr}}
+  footer{margin-top:20px;color:var(--muted);font-size:.74rem;text-align:center}
+  .themebtn{position:fixed;top:calc(10px + env(safe-area-inset-top,0px));right:12px;background:var(--panel);border:1px solid var(--line);color:var(--muted);border-radius:8px;padding:6px 10px;font-size:.74rem;cursor:pointer;z-index:9}
+  @media(max-width:640px){.grid{grid-template-columns:repeat(auto-fill,minmax(130px,1fr))}}
 </style>
 </head>
 <body>
@@ -77,239 +103,373 @@
   <header>
     <span class="tag">Client-side · ภาพไม่ออกจากเครื่อง</span>
     <h1>AI Cloak Studio</h1>
-    <p>ใส่ชั้นรบกวนที่ตามนุษย์แทบมองไม่เห็น เพื่อลดความแม่นของระบบอ่านภาพอัตโนมัติ ภาพถูกประมวลผลในเบราว์เซอร์ทั้งหมด ไม่มีการอัปโหลดขึ้นเซิร์ฟเวอร์ใด ๆ</p>
+    <p>แต่งโทนสี + ใส่ชั้นกันเอไออ่านภาพ + ฝังลายน้ำ ทำหลายภาพพร้อมกัน ประมวลผลในเบราว์เซอร์ทั้งหมด ไม่อัปโหลดขึ้นเซิร์ฟเวอร์</p>
   </header>
 
-  <div class="drop" id="drop" tabindex="0" role="button" aria-label="อัปโหลดภาพ">
-    <strong>ลากภาพมาวาง</strong> หรือคลิกเพื่อเลือกไฟล์<br>
-    <span>รองรับ JPG / PNG / WebP — แนะนำภาพ portrait</span>
-    <input type="file" id="file" accept="image/*" hidden>
+  <div class="drop" id="drop" tabindex="0" role="button">
+    <strong>ลากภาพมาวาง</strong> หรือคลิกเพื่อเลือก (เลือกได้หลายภาพ)<br>
+    <span>JPG / PNG / WebP</span>
+    <input type="file" id="file" accept="image/*" multiple hidden>
   </div>
 
-  <div class="rail">
-    <div class="frame orig">
-      <h3><span class="dot"></span> ต้นฉบับ</h3>
-      <div class="cv-box"><canvas id="cv-orig"></canvas><span class="empty" id="e1">ยังไม่มีภาพ</span></div>
+  <!-- CONTROL PANEL (TOP) -->
+  <div class="panel" id="panel" hidden>
+    <div class="tabs">
+      <button class="tab on" data-s="color">🎨 ฟิลเตอร์สี</button>
+      <button class="tab" data-s="cloak">🛡️ กันเอไอ</button>
+      <button class="tab" data-s="mark">✒️ ลายน้ำ</button>
     </div>
-    <div class="frame prot">
-      <h3><span class="dot"></span> หลังใส่ชั้นกวน</h3>
-      <div class="cv-box"><canvas id="cv-prot"></canvas><span class="empty" id="e2">รอประมวลผล</span></div>
-    </div>
-    <div class="frame fb">
-      <h3><span class="dot"></span> จำลองผ่าน Facebook</h3>
-      <div class="cv-box"><canvas id="cv-fb"></canvas><span class="empty" id="e3">กดปุ่มจำลอง</span></div>
-    </div>
-  </div>
 
-  <div class="controls">
-    <div class="ctl">
-      <label>ความแรงของชั้นกวน (ε) <span class="val" id="vEps">8 / 255</span></label>
-      <input type="range" id="eps" min="2" max="24" value="8" step="1">
-      <div class="hint">ยิ่งสูงยิ่งกวนเอไอได้มาก แต่เริ่มเห็น noise ด้วยตาเปล่า — portrait แนะนำ 6–12</div>
-    </div>
-    <div class="ctl">
-      <label>ขนาด patch grid (px) <span class="val" id="vGrid">14</span></label>
-      <input type="range" id="grid" min="8" max="24" value="14" step="1">
-      <div class="hint">เล็งกวนจุดที่ vision encoder ตัดภาพเป็นช่อง (ViT ≈ 14–16px)</div>
-    </div>
-    <div class="ctl">
-      <div class="row">
-        <label class="chk"><input type="checkbox" id="mNoise" checked> High-freq noise</label>
-        <label class="chk"><input type="checkbox" id="mGrid" checked> Patch-grid กวน</label>
-        <label class="chk"><input type="checkbox" id="mWarp"> Micro-warp (คลื่น)</label>
+    <!-- COLOR -->
+    <div class="sect on" id="sec-color">
+      <div class="presets" id="presets"></div>
+      <div class="ctl" style="margin-top:12px">
+        <label>ความเข้มฟิลเตอร์ <span class="val" id="vFx">100%</span></label>
+        <input type="range" id="fxAmt" min="0" max="100" value="100">
       </div>
-      <div class="hint" style="margin-top:8px">Micro-warp = บิดพิกเซลระดับต่ำกว่า 1px ทนการบีบอัดได้ดีกว่า noise แต่ถ้าแรงไปใบหน้าจะเริ่มเพี้ยน</div>
     </div>
 
-    <div class="actions">
-      <button class="btn-primary" id="apply" disabled>ใส่ชั้นกวน</button>
-      <button class="btn-fb" id="simfb" disabled>จำลองผ่าน Facebook</button>
-      <button class="btn-ghost" id="dlProt" disabled>ดาวน์โหลดภาพกวน (PNG)</button>
-      <button class="btn-ghost" id="dlFb" disabled>ดาวน์โหลดภาพหลัง FB (JPG)</button>
+    <!-- CLOAK -->
+    <div class="sect" id="sec-cloak">
+      <div class="ctl">
+        <label>ความแรง noise (ε) <span class="val" id="vEps">8 / 255</span></label>
+        <input type="range" id="eps" min="0" max="24" value="8">
+        <div class="hint">กวนค่าพิกเซลแบบตามนุษย์แทบไม่เห็น portrait แนะนำ 6–12</div>
+      </div>
+      <div class="ctl">
+        <label>Patch grid (px) <span class="val" id="vGrid">14</span></label>
+        <input type="range" id="grid" min="8" max="24" value="14">
+        <div class="hint">เล็งกวนจุดที่ vision encoder ตัดภาพเป็นช่อง (~14–16px)</div>
+      </div>
+      <div class="ctl">
+        <div class="row">
+          <label class="chk"><input type="checkbox" id="mNoise" checked> High-freq noise</label>
+          <label class="chk"><input type="checkbox" id="mGrid" checked> Patch-grid</label>
+          <label class="chk"><input type="checkbox" id="mWarp"> Micro-warp</label>
+        </div>
+      </div>
+      <div class="ctl">
+        <label><label class="chk" style="flex:0 0 auto"><input type="checkbox" id="mShuffle"> สลับช่อง (ทดลอง)</label> <span class="val" id="vTiles">3 × 3</span></label>
+        <input type="range" id="tiles" min="2" max="6" value="3">
+        <div class="hint"><b style="color:var(--danger)">แรงสุด:</b> ตัดภาพเป็นตารางแล้วสลับตำแหน่ง ทำให้เอไองงว่าเป็นรูปอะไร — แต่ตามนุษย์ก็จะเห็นภาพสลับด้วย เหมาะกับงานที่ยอมให้หน้าตาเพี้ยน</div>
+      </div>
     </div>
 
-    <div class="meta">
-      <div class="stat"><small>ความต่างจากต้นฉบับ (PSNR)</small><b id="sPsnr">—</b></div>
-      <div class="stat"><small>พิกเซลที่ถูกแตะ</small><b id="sTouched">—</b></div>
+    <!-- WATERMARK -->
+    <div class="sect" id="sec-mark">
+      <div class="seg">
+        <button class="on" id="wmText">ข้อความ</button>
+        <button id="wmImg">ภาพลายเซ็น</button>
+      </div>
+      <div id="wmTextBox">
+        <div class="ctl"><input type="text" id="wmString" placeholder="เช่น © Siriyos / ชื่อเพจของคุณ" value="© Siriyos"></div>
+      </div>
+      <div id="wmImgBox" hidden>
+        <div class="drop" id="sigDrop" style="margin-top:0;padding:14px"><strong>วางภาพลายเซ็น</strong> <span>(ตัดพื้นหลังขาวให้อัตโนมัติ)</span><input type="file" id="sigFile" accept="image/*" hidden></div>
+        <div class="sigprev" id="sigPrev"><span>ยังไม่มีภาพลายเซ็น</span></div>
+      </div>
+      <div class="ctl" style="margin-top:12px">
+        <label>ตำแหน่ง</label>
+        <div class="posgrid" id="posgrid"></div>
+      </div>
+      <div class="ctl"><label>ขนาด <span class="val" id="vWmSize">22%</span></label><input type="range" id="wmSize" min="6" max="60" value="22"></div>
+      <div class="ctl"><label>ความทึบ <span class="val" id="vWmOp">70%</span></label><input type="range" id="wmOp" min="10" max="100" value="70"></div>
+      <label class="chk" style="margin-top:4px"><input type="checkbox" id="wmOn"> เปิดใช้ลายน้ำ</label>
     </div>
+
+    <div class="bar">
+      <button class="act btn-primary" id="run">ประมวลผลทั้งหมด</button>
+      <button class="act btn-zip" id="zip" disabled>ดาวน์โหลด ZIP</button>
+      <button class="act btn-ghost" id="clear">ล้าง</button>
+      <span class="count" id="count">0 ภาพ</span>
+    </div>
+  </div>
+
+  <!-- RESULTS (BOTTOM) -->
+  <div class="results" id="results" hidden>
+    <h2>ผลลัพธ์</h2>
+    <p class="sub">แตะที่ภาพ หรือกดค้าง เพื่อดาวน์โหลดทีละรูป · หลายรูปใช้ปุ่ม ZIP ด้านบน</p>
+    <div class="grid" id="grid"></div>
   </div>
 
   <div class="note">
-    <b>อ่านก่อนใช้จริง:</b> เครื่องมือนี้เป็น <b>ชั้นเสริม ไม่ใช่เกราะรับประกัน</b> — ระบบอ่านภาพของ Facebook บีบอัดและย่อภาพทุกใบ ชั้นกวนบางส่วนจะหายไป ให้ใช้ปุ่ม “จำลองผ่าน Facebook” ตรวจเสมอว่าหลังบีบอัดภาพยังกวนเอไอได้พอ สำหรับข้อมูลลับลูกค้าจริง ควรใช้คู่กับการปิดข้อมูลระบุตัวตน (redact) และช่องทางส่งที่เข้ารหัส ไม่ควรพึ่งชั้นกวนอย่างเดียว
+    <b>ชั้นกันเอไอเป็นชั้นเสริม ไม่ใช่เกราะรับประกัน:</b> Facebook บีบอัดภาพทุกใบ ชั้น noise บางส่วนจะหายไป โหมด “สลับช่อง” แรงที่สุดแต่กระทบสายตามนุษย์ด้วย สำหรับข้อมูลลับลูกค้าจริง ควรใช้คู่กับการปิดข้อมูลระบุตัวตนและช่องทางส่งที่เข้ารหัส
   </div>
-
-  <footer>ทุกการประมวลผลเกิดบนเครื่องคุณ — ปิดอินเทอร์เน็ตแล้วยังใช้งานได้ · วางไฟล์นี้บน GitHub Pages ได้ทันที</footer>
+  <footer>ประมวลผลบนเครื่องคุณทั้งหมด · วางบน GitHub Pages ได้ทันที</footer>
 </div>
 
 <script>
 (function(){
-  "use strict";
-  const $=id=>document.getElementById(id);
-  const cvO=$('cv-orig'),cvP=$('cv-prot'),cvF=$('cv-fb');
-  let imgData=null, img=null, protBlob=null, fbBlob=null, protCanvas=null;
+"use strict";
+const $=id=>document.getElementById(id);
+let items=[]; // {name, srcCanvas, outCanvas, outBlob}
+let activePreset='none', sigCanvas=null, wmMode='text', wmPos='br';
 
-  // theme toggle (per-viewer)
-  try{const t=localStorage.getItem('cloak-theme'); if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}
-  $('theme').onclick=()=>{
-    const cur=document.documentElement.getAttribute('data-theme')==='light'?'light':'dark';
-    const nxt=cur==='light'?'dark':'light';
-    document.documentElement.setAttribute('data-theme',nxt);
-    try{localStorage.setItem('cloak-theme',nxt);}catch(e){}
-  };
+/* theme */
+try{const t=localStorage.getItem('cloak-theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}
+$('theme').onclick=()=>{const c=document.documentElement.getAttribute('data-theme')==='light'?'light':'dark';const n=c==='light'?'dark':'light';document.documentElement.setAttribute('data-theme',n);try{localStorage.setItem('cloak-theme',n);}catch(e){}};
 
-  // ---- load image ----
-  const drop=$('drop'),file=$('file');
-  drop.onclick=()=>file.click();
-  drop.onkeydown=e=>{if(e.key==='Enter'||e.key===' ')file.click();};
-  ['dragover','dragenter'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.add('hot');}));
-  ['dragleave','drop'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove('hot');}));
-  drop.addEventListener('drop',e=>{if(e.dataTransfer.files[0])loadFile(e.dataTransfer.files[0]);});
-  file.onchange=e=>{if(e.target.files[0])loadFile(e.target.files[0]);};
+/* tabs */
+document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));t.classList.add('on');
+  document.querySelectorAll('.sect').forEach(s=>s.classList.remove('on'));$('sec-'+t.dataset.s).classList.add('on');
+});
 
-  function loadFile(f){
-    if(!f.type.startsWith('image/'))return;
-    const r=new FileReader();
-    r.onload=()=>{
-      img=new Image();
-      img.onload=()=>{
-        // cap long side at 2048 for sane processing, keep aspect
-        const MAX=2048; let w=img.width,h=img.height;
-        if(Math.max(w,h)>MAX){const s=MAX/Math.max(w,h);w=Math.round(w*s);h=Math.round(h*s);}
-        [cvO,cvP,cvF].forEach(c=>{c.width=w;c.height=h;});
-        const ctx=cvO.getContext('2d'); ctx.drawImage(img,0,0,w,h);
-        imgData=ctx.getImageData(0,0,w,h);
-        $('e1').hidden=true;$('e2').hidden=false;$('e3').hidden=false;
-        // clear downstream
-        cvP.getContext('2d').clearRect(0,0,w,h);
-        cvF.getContext('2d').clearRect(0,0,w,h);
-        $('e2').textContent='รอประมวลผล';$('e3').textContent='กดปุ่มจำลอง';
-        protBlob=fbBlob=null;
-        $('apply').disabled=false; $('simfb').disabled=true;
-        $('dlProt').disabled=true; $('dlFb').disabled=true;
-        $('sPsnr').textContent='—';$('sTouched').textContent='—';
-      };
-      img.src=r.result;
-    };
-    r.readAsDataURL(f);
+/* ---------- COLOR PRESETS ---------- */
+const PRESETS={
+  none:{nm:'ต้นฉบับ',sw:'#888',p:{}},
+  clean:{nm:'สะอาดสว่าง',sw:'linear-gradient(135deg,#eef4f7,#cfe0e8)',p:{ev:.06,con:1.06,sat:1.06,temp:4,fade:.02}},
+  warm:{nm:'ฟิล์มวอร์ม',sw:'linear-gradient(135deg,#f4d9b0,#c98a52)',p:{temp:16,con:1.08,sat:.96,fade:.05,hTone:[255,180,90],hAmt:.14}},
+  moody:{nm:'มู้ดดี้เข้ม',sw:'linear-gradient(135deg,#3a4452,#141a22)',p:{ev:-.08,con:1.2,sat:.9,fade:.04,sTone:[40,70,120],sAmt:.18,vig:.35}},
+  cine:{nm:'หนังโรง',sw:'linear-gradient(135deg,#f0a35a,#1f5f66)',p:{con:1.14,sat:1.1,sTone:[0,110,120],sAmt:.2,hTone:[255,150,70],hAmt:.18}},
+  korean:{nm:'เกาหลีพาสเทล',sw:'linear-gradient(135deg,#f7e3e8,#d7e6ea)',p:{ev:.08,con:.96,sat:.85,temp:2,tint:5,fade:.09}},
+  vintage:{nm:'วินเทจซีด',sw:'linear-gradient(135deg,#d9c6a5,#8f7a63)',p:{sat:.8,fade:.13,temp:9,con:.92,grain:9,hTone:[255,200,140],hAmt:.1}},
+  golden:{nm:'แสงทอง',sw:'linear-gradient(135deg,#ffcf7a,#e08a3c)',p:{ev:.07,temp:24,sat:1.06,con:1.05,hTone:[255,190,100],hAmt:.2}},
+  matte:{nm:'แมตต์สะอาด',sw:'linear-gradient(135deg,#dfe2e4,#b7bcc2)',p:{con:.9,fade:.11,sat:.95,ev:.03}},
+  bw:{nm:'ขาวดำฟิล์ม',sw:'linear-gradient(135deg,#e8e8e8,#2a2a2a)',p:{bw:1,con:1.22,fade:.03,grain:11}},
+  forest:{nm:'เขียวหม่น',sw:'linear-gradient(135deg,#9fb89a,#33402f)',p:{temp:-10,tint:-8,sat:.9,con:1.1,sTone:[40,90,60],sAmt:.16,vig:.25}}
+};
+const pbox=$('presets');
+Object.keys(PRESETS).forEach(k=>{
+  const el=document.createElement('div');el.className='preset'+(k==='none'?' on':'');el.dataset.k=k;
+  el.innerHTML=`<div class="sw" style="background:${PRESETS[k].sw}"></div><div class="nm">${PRESETS[k].nm}</div>`;
+  el.onclick=()=>{activePreset=k;document.querySelectorAll('.preset').forEach(x=>x.classList.remove('on'));el.classList.add('on');};
+  pbox.appendChild(el);
+});
+
+function grade(data,P,amt){
+  if(!P||Object.keys(P).length===0)return;
+  const ev=P.ev||0,con=P.con||1,sat=P.sat==null?1:P.sat,temp=P.temp||0,tint=P.tint||0,
+    fade=P.fade||0,sT=P.sTone,sA=P.sAmt||0,hT=P.hTone,hA=P.hAmt||0,bw=P.bw,grain=P.grain||0,vig=P.vig||0;
+  const d=data.data,n=d.length;
+  for(let i=0;i<n;i+=4){
+    let r=d[i],g=d[i+1],b=d[i+2];
+    // exposure
+    if(ev){r+=ev*255;g+=ev*255;b+=ev*255;}
+    // temp / tint (white balance)
+    if(temp){r+=temp;b-=temp;} if(tint){g+=tint;}
+    // contrast around mid
+    if(con!==1){r=(r-128)*con+128;g=(g-128)*con+128;b=(b-128)*con+128;}
+    // saturation / bw
+    const lum=0.299*r+0.587*g+0.114*b;
+    if(bw){r=g=b=lum;}
+    else if(sat!==1){r=lum+(r-lum)*sat;g=lum+(g-lum)*sat;b=lum+(b-lum)*sat;}
+    // fade (lift blacks)
+    if(fade){r=r*(1-fade)+255*fade*0.6+ (fade*18);g=g*(1-fade)+255*fade*0.6+(fade*18);b=b*(1-fade)+255*fade*0.6+(fade*18);}
+    // split tone
+    if(sA&&sT){const w=1-lum/255;r+=sT[0]/255*w*sA*60;g+=sT[1]/255*w*sA*60;b+=sT[2]/255*w*sA*60;}
+    if(hA&&hT){const w=lum/255;r+=hT[0]/255*w*hA*60-hA*20;g+=hT[1]/255*w*hA*60-hA*20;b+=hT[2]/255*w*hA*60-hA*20;}
+    // grain
+    if(grain){const gr=(Math.random()*2-1)*grain;r+=gr;g+=gr;b+=gr;}
+    // blend by amt
+    if(amt<1){r=d[i]+(r-d[i])*amt;g=d[i+1]+(g-d[i+1])*amt;b=d[i+2]+(b-d[i+2])*amt;}
+    d[i]=r<0?0:r>255?255:r;d[i+1]=g<0?0:g>255?255:g;d[i+2]=b<0?0:b>255?255:b;
   }
-
-  // slider labels
-  $('eps').oninput=e=>$('vEps').textContent=e.target.value+' / 255';
-  $('grid').oninput=e=>$('vGrid').textContent=e.target.value;
-
-  // seeded PRNG so each image is deterministic per run
-  function rng(seed){let s=seed>>>0;return()=>{s=(s*1664525+1013904223)>>>0;return s/4294967296;};}
-
-  // ---- core: apply cloak ----
-  $('apply').onclick=()=>{
-    if(!imgData)return;
-    const w=cvO.width,h=cvO.height;
-    const eps=+$('eps').value, grid=+$('grid').value;
-    const useNoise=$('mNoise').checked,useGrid=$('mGrid').checked,useWarp=$('mWarp').checked;
-    const src=imgData.data;
-    const out=new Uint8ClampedArray(src); // start from original
-    const rand=rng(0x9e3779b1 ^ (w*73856093) ^ (h*19349663));
-    let touched=0;
-
-    // 1) micro-warp first (geometric), sample from source
-    if(useWarp){
-      const amp=Math.min(0.9, eps/14); // sub-pixel displacement
-      const tmp=new Uint8ClampedArray(src);
-      for(let y=0;y<h;y++){
-        for(let x=0;x<w;x++){
-          const dx=amp*Math.sin((y/7.0)+(x/23.0));
-          const dy=amp*Math.cos((x/9.0)+(y/19.0));
-          const sx=Math.min(w-1,Math.max(0,Math.round(x+dx)));
-          const sy=Math.min(h-1,Math.max(0,Math.round(y+dy)));
-          const di=(y*w+x)*4, si=(sy*w+sx)*4;
-          tmp[di]=src[si];tmp[di+1]=src[si+1];tmp[di+2]=src[si+2];tmp[di+3]=src[si+3];
-        }
-      }
-      out.set(tmp);
+  // vignette (post pass)
+  if(vig){
+    const w=data.width,h=data.height,cx=w/2,cy=h/2,mx=Math.hypot(cx,cy);
+    for(let y=0;y<h;y++)for(let x=0;x<w;x++){
+      const i=(y*w+x)*4,dd=Math.hypot(x-cx,y-cy)/mx,f=1-vig*Math.pow(dd,2)*amt;
+      d[i]*=f;d[i+1]*=f;d[i+2]*=f;
     }
-
-    // 2) high-freq noise + 3) patch-grid emphasis, in one pixel pass
-    for(let y=0;y<h;y++){
-      for(let x=0;x<w;x++){
-        const i=(y*w+x)*4;
-        let n0=0,n1=0,n2=0,changed=false;
-        if(useNoise){
-          // signed noise bounded by eps, biased to high frequency via checker sign
-          const chk=((x+y)&1)?1:-1;
-          n0+=chk*Math.round((rand()*2-1)*eps);
-          n1+=chk*Math.round((rand()*2-1)*eps);
-          n2+=chk*Math.round((rand()*2-1)*eps);
-          changed=true;
-        }
-        if(useGrid){
-          // stronger nudge right on patch boundaries (where tokenizer cuts)
-          if(x%grid===0 || y%grid===0){
-            const g=Math.round((rand()*2-1)*eps*1.5);
-            n0+=g;n1+=g;n2+=g;changed=true;
-          }
-        }
-        if(changed){
-          out[i]=clamp(out[i]+n0);
-          out[i+1]=clamp(out[i+1]+n1);
-          out[i+2]=clamp(out[i+2]+n2);
-          touched++;
-        }
-      }
-    }
-
-    const od=new ImageData(out,w,h);
-    protCanvas=document.createElement('canvas');protCanvas.width=w;protCanvas.height=h;
-    protCanvas.getContext('2d').putImageData(od,0,0);
-    cvP.getContext('2d').putImageData(od,0,0);
-    $('e2').hidden=true;
-
-    // stats
-    $('sPsnr').textContent=psnr(src,out).toFixed(1)+' dB';
-    $('sTouched').textContent=Math.round(touched/(w*h)*100)+' %';
-
-    protCanvas.toBlob(b=>{protBlob=b;$('dlProt').disabled=false;},'image/png');
-    $('simfb').disabled=false;
-    $('dlFb').disabled=true; fbBlob=null;
-    $('e3').textContent='กดปุ่มจำลอง';
-    cvF.getContext('2d').clearRect(0,0,w,h);
-  };
-
-  function clamp(v){return v<0?0:v>255?255:v;}
-  function psnr(a,b){let mse=0,n=0;for(let i=0;i<a.length;i+=4){for(let k=0;k<3;k++){const d=a[i+k]-b[i+k];mse+=d*d;n++;}}mse/=n;return mse===0?99:10*Math.log10(255*255/mse);}
-
-  // ---- simulate Facebook pipeline: downscale + JPEG recompress ----
-  $('simfb').onclick=()=>{
-    if(!protCanvas)return;
-    const w=protCanvas.width,h=protCanvas.height;
-    // FB typically caps long side ~2048 and re-encodes JPEG ~71-85 quality
-    const FBMAX=2048; let tw=w,th=h;
-    if(Math.max(w,h)>FBMAX){const s=FBMAX/Math.max(w,h);tw=Math.round(w*s);th=Math.round(h*s);}
-    const tmp=document.createElement('canvas');tmp.width=tw;tmp.height=th;
-    const tctx=tmp.getContext('2d');tctx.imageSmoothingQuality='high';
-    tctx.drawImage(protCanvas,0,0,tw,th);
-    tmp.toBlob(b=>{
-      fbBlob=b;
-      const u=URL.createObjectURL(b);const im=new Image();
-      im.onload=()=>{
-        cvF.width=tw;cvF.height=th;
-        cvF.getContext('2d').drawImage(im,0,0);
-        $('e3').hidden=true;
-        $('dlFb').disabled=false;
-        URL.revokeObjectURL(u);
-      };
-      im.src=u;
-    },'image/jpeg',0.78);
-  };
-
-  // ---- downloads ----
-  function dl(blob,name){
-    if(!blob)return;
-    const u=URL.createObjectURL(blob);const a=document.createElement('a');
-    a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();
-    setTimeout(()=>URL.revokeObjectURL(u),1500);
   }
-  $('dlProt').onclick=()=>dl(protBlob,'cloaked.png');
-  $('dlFb').onclick=()=>dl(fbBlob,'cloaked_fb.jpg');
+}
+
+/* ---------- CLOAK ---------- */
+function clamp(v){return v<0?0:v>255?255:v;}
+function cloak(cv){
+  const eps=+$('eps').value,gridN=+$('grid').value;
+  const useN=$('mNoise').checked,useG=$('mGrid').checked,useW=$('mWarp').checked,useS=$('mShuffle').checked,tiles=+$('tiles').value;
+  const ctx=cv.getContext('2d'),w=cv.width,h=cv.height;
+  let id=ctx.getImageData(0,0,w,h),src=id.data;
+  // warp (geometric) first
+  if(useW&&eps>0){
+    const amp=Math.min(1.0,eps/14),out=new Uint8ClampedArray(src);
+    for(let y=0;y<h;y++)for(let x=0;x<w;x++){
+      const dx=amp*Math.sin(y/7+x/23),dy=amp*Math.cos(x/9+y/19);
+      const sx=Math.min(w-1,Math.max(0,Math.round(x+dx))),sy=Math.min(h-1,Math.max(0,Math.round(y+dy)));
+      const di=(y*w+x)*4,si=(sy*w+sx)*4;out[di]=src[si];out[di+1]=src[si+1];out[di+2]=src[si+2];out[di+3]=src[si+3];
+    }
+    src.set(out);
+  }
+  // noise + grid
+  if((useN||useG)&&eps>0){
+    for(let y=0;y<h;y++)for(let x=0;x<w;x++){
+      const i=(y*w+x)*4;let n0=0,n1=0,n2=0;
+      if(useN){const chk=((x+y)&1)?1:-1;n0+=chk*Math.round((Math.random()*2-1)*eps);n1+=chk*Math.round((Math.random()*2-1)*eps);n2+=chk*Math.round((Math.random()*2-1)*eps);}
+      if(useG&&(x%gridN===0||y%gridN===0)){const g=Math.round((Math.random()*2-1)*eps*1.5);n0+=g;n1+=g;n2+=g;}
+      src[i]=clamp(src[i]+n0);src[i+1]=clamp(src[i+1]+n1);src[i+2]=clamp(src[i+2]+n2);
+    }
+  }
+  ctx.putImageData(id,0,0);
+  // tile shuffle (draw pass)
+  if(useS&&tiles>=2){
+    const tmp=document.createElement('canvas');tmp.width=w;tmp.height=h;tmp.getContext('2d').drawImage(cv,0,0);
+    const tw=Math.floor(w/tiles),th=Math.floor(h/tiles),order=[];
+    for(let i=0;i<tiles*tiles;i++)order.push(i);
+    // deterministic-ish shuffle
+    for(let i=order.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[order[i],order[j]]=[order[j],order[i]];}
+    ctx.clearRect(0,0,w,h);
+    for(let i=0;i<tiles*tiles;i++){
+      const from=order[i];
+      const fx=(from%tiles)*tw,fy=Math.floor(from/tiles)*th;
+      const tx=(i%tiles)*tw,ty=Math.floor(i/tiles)*th;
+      ctx.drawImage(tmp,fx,fy,tw,th,tx,ty,tw,th);
+    }
+  }
+}
+
+/* ---------- WATERMARK ---------- */
+$('wmText').onclick=()=>{wmMode='text';$('wmText').classList.add('on');$('wmImg').classList.remove('on');$('wmTextBox').hidden=false;$('wmImgBox').hidden=true;$('wmOn').checked=true;};
+$('wmImg').onclick=()=>{wmMode='img';$('wmImg').classList.add('on');$('wmText').classList.remove('on');$('wmTextBox').hidden=true;$('wmImgBox').hidden=false;};
+const posg=$('posgrid'),POS=['tl','tc','tr','ml','mc','mr','bl','bc','br'];
+POS.forEach(p=>{const b=document.createElement('button');b.dataset.p=p;if(p==='br')b.classList.add('on');b.onclick=()=>{wmPos=p;posg.querySelectorAll('button').forEach(x=>x.classList.remove('on'));b.classList.add('on');};posg.appendChild(b);});
+
+$('sigDrop').onclick=()=>$('sigFile').click();
+$('sigFile').onchange=e=>{if(e.target.files[0])loadSig(e.target.files[0]);};
+function loadSig(f){const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{
+  const c=document.createElement('canvas');c.width=im.width;c.height=im.height;const x=c.getContext('2d');x.drawImage(im,0,0);
+  // auto remove bg: sample 4 corners, make near-bg transparent
+  const d=x.getImageData(0,0,c.width,c.height),p=d.data,W=c.width,H=c.height;
+  const corners=[[0,0],[W-1,0],[0,H-1],[W-1,H-1]];let br=0,bg=0,bb=0;
+  corners.forEach(([cx,cy])=>{const i=(cy*W+cx)*4;br+=p[i];bg+=p[i+1];bb+=p[i+2];});br/=4;bg/=4;bb/=4;
+  const tol=70;
+  for(let i=0;i<p.length;i+=4){const dist=Math.hypot(p[i]-br,p[i+1]-bg,p[i+2]-bb);
+    if(dist<tol)p[i+3]=0;else if(dist<tol*1.6)p[i+3]=Math.round(p[i+3]*(dist-tol)/(tol*0.6));}
+  x.putImageData(d,0,0);sigCanvas=c;
+  $('sigPrev').innerHTML='';const pv=new Image();pv.src=c.toDataURL();$('sigPrev').appendChild(pv);
+  $('wmOn').checked=true;
+};im.src=r.result;};r.readAsDataURL(f);}
+
+function watermark(cv){
+  if(!$('wmOn').checked)return;
+  const ctx=cv.getContext('2d'),w=cv.width,h=cv.height,op=+$('wmOp').value/100,sizePct=+$('wmSize').value/100;
+  const mx=Math.round(w*0.03),my=Math.round(h*0.03);
+  ctx.save();ctx.globalAlpha=op;
+  if(wmMode==='img'&&sigCanvas){
+    const tw=Math.round(w*sizePct),th=Math.round(sigCanvas.height*(tw/sigCanvas.width));
+    const[px,py]=anchor(wmPos,w,h,tw,th,mx,my);ctx.drawImage(sigCanvas,px,py,tw,th);
+  }else{
+    const txt=$('wmString').value||'';if(!txt){ctx.restore();return;}
+    const fs=Math.round(w*sizePct*0.5);ctx.font=`600 ${fs}px 'Sarabun',sans-serif`;
+    const tw=ctx.measureText(txt).width,th=fs;
+    const[px,py]=anchor(wmPos,w,h,tw,th,mx,my);
+    ctx.fillStyle='rgba(0,0,0,.45)';ctx.fillText(txt,px+2,py+th+2);
+    ctx.fillStyle='#fff';ctx.fillText(txt,px,py+th);
+  }
+  ctx.restore();
+}
+function anchor(pos,w,h,tw,th,mx,my){
+  const cx=pos[1]==='l'?mx:pos[1]==='r'?w-tw-mx:(w-tw)/2;
+  const cy=pos[0]==='t'?my:pos[0]==='b'?h-th-my:(h-th)/2;
+  return[Math.round(cx),Math.round(cy)];
+}
+
+/* ---------- LOAD IMAGES ---------- */
+const drop=$('drop'),file=$('file');
+drop.onclick=()=>file.click();
+['dragover','dragenter'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.add('hot');}));
+['dragleave','drop'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove('hot');}));
+drop.addEventListener('drop',e=>addFiles(e.dataTransfer.files));
+file.onchange=e=>addFiles(e.target.files);
+
+function addFiles(fl){
+  const arr=[...fl].filter(f=>f.type.startsWith('image/'));let left=arr.length;if(!left)return;
+  arr.forEach(f=>{const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{
+    const MAX=2048;let w=im.width,h=im.height;if(Math.max(w,h)>MAX){const s=MAX/Math.max(w,h);w=Math.round(w*s);h=Math.round(h*s);}
+    const c=document.createElement('canvas');c.width=w;c.height=h;c.getContext('2d').drawImage(im,0,0,w,h);
+    items.push({name:f.name.replace(/\.[^.]+$/,''),src:c,out:null,blob:null});
+    left--;if(left===0)refresh();
+  };im.src=r.result;};r.readAsDataURL(f);});
+  $('panel').hidden=false;
+}
+
+/* ---------- RUN ---------- */
+$('run').onclick=async()=>{
+  if(!items.length)return;
+  $('results').hidden=false;$('run').disabled=true;$('run').textContent='กำลังประมวลผล…';
+  const fxAmt=+$('fxAmt').value/100;
+  for(const it of items){
+    const c=document.createElement('canvas');c.width=it.src.width;c.height=it.src.height;
+    const ctx=c.getContext('2d');ctx.drawImage(it.src,0,0);
+    // 1 color
+    if(activePreset!=='none'){const id=ctx.getImageData(0,0,c.width,c.height);grade(id,PRESETS[activePreset].p,fxAmt);ctx.putImageData(id,0,0);}
+    // 2 cloak
+    cloak(c);
+    // 3 watermark
+    watermark(c);
+    it.out=c;
+    it.blob=await new Promise(res=>c.toBlob(res,'image/jpeg',0.92));
+    await new Promise(r=>setTimeout(r,0));
+  }
+  renderGrid();
+  $('run').disabled=false;$('run').textContent='ประมวลผลทั้งหมด';$('zip').disabled=items.length===0;
+};
+
+function refresh(){$('count').textContent=items.length+' ภาพ';}
+function renderGrid(){
+  const g=$('grid');g.innerHTML='';
+  items.forEach((it,idx)=>{
+    if(!it.out)return;
+    const card=document.createElement('div');card.className='card';
+    const url=URL.createObjectURL(it.blob);
+    card.innerHTML=`<div class="thumb"><img src="${url}"><div class="flash"></div><button class="dlbtn">⬇ โหลด</button></div><div class="nm">${it.name}_cloaked.jpg</div>`;
+    const thumb=card.querySelector('.thumb'),flash=card.querySelector('.flash');
+    const doDl=()=>{dlOne(it);flash.style.opacity=.5;setTimeout(()=>flash.style.opacity=0,120);};
+    card.querySelector('.dlbtn').onclick=e=>{e.stopPropagation();doDl();};
+    // long-press + tap
+    let timer=null,moved=false;
+    thumb.addEventListener('pointerdown',()=>{moved=false;timer=setTimeout(()=>{doDl();timer=null;},500);});
+    thumb.addEventListener('pointermove',()=>{moved=true;});
+    ['pointerup','pointerleave','pointercancel'].forEach(ev=>thumb.addEventListener(ev,()=>{if(timer){clearTimeout(timer);if(ev==='pointerup'&&!moved)doDl();timer=null;}}));
+    thumb.addEventListener('contextmenu',e=>{e.preventDefault();doDl();});
+    g.appendChild(card);
+  });
+}
+function dlOne(it){const u=URL.createObjectURL(it.blob);const a=document.createElement('a');a.href=u;a.download=it.name+'_cloaked.jpg';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),1500);}
+
+$('clear').onclick=()=>{items=[];$('grid').innerHTML='';$('results').hidden=true;$('zip').disabled=true;refresh();};
+
+/* ---------- ZIP (store, no deps) ---------- */
+const crcT=(()=>{const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c;}return t;})();
+function crc32(u8){let c=0xFFFFFFFF;for(let i=0;i<u8.length;i++)c=crcT[(c^u8[i])&0xFF]^(c>>>8);return(c^0xFFFFFFFF)>>>0;}
+function zipStore(files){ // [{name,data:Uint8Array}]
+  const enc=new TextEncoder();let locals=[],central=[],offset=0;
+  files.forEach(f=>{
+    const name=enc.encode(f.name),crc=crc32(f.data),sz=f.data.length;
+    const lh=new Uint8Array(30+name.length);const dv=new DataView(lh.buffer);
+    dv.setUint32(0,0x04034b50,true);dv.setUint16(4,20,true);dv.setUint16(6,0,true);dv.setUint16(8,0,true);
+    dv.setUint16(10,0,true);dv.setUint16(12,0,true);dv.setUint32(14,crc,true);dv.setUint32(18,sz,true);dv.setUint32(22,sz,true);
+    dv.setUint16(26,name.length,true);dv.setUint16(28,0,true);lh.set(name,30);
+    locals.push(lh,f.data);
+    const ch=new Uint8Array(46+name.length);const cv=new DataView(ch.buffer);
+    cv.setUint32(0,0x02014b50,true);cv.setUint16(4,20,true);cv.setUint16(6,20,true);cv.setUint16(8,0,true);cv.setUint16(10,0,true);
+    cv.setUint16(12,0,true);cv.setUint16(14,0,true);cv.setUint32(16,crc,true);cv.setUint32(20,sz,true);cv.setUint32(24,sz,true);
+    cv.setUint16(28,name.length,true);cv.setUint32(42,offset,true);ch.set(name,46);
+    central.push(ch);offset+=lh.length+sz;
+  });
+  let cdSize=central.reduce((a,c)=>a+c.length,0),cdOff=offset;
+  const end=new Uint8Array(22);const ev=new DataView(end.buffer);
+  ev.setUint32(0,0x06054b50,true);ev.setUint16(8,files.length,true);ev.setUint16(10,files.length,true);
+  ev.setUint32(12,cdSize,true);ev.setUint32(16,cdOff,true);
+  return new Blob([...locals,...central,end],{type:'application/zip'});
+}
+$('zip').onclick=async()=>{
+  const ready=items.filter(it=>it.blob);if(!ready.length)return;
+  $('zip').disabled=true;$('zip').textContent='กำลังรวม…';
+  const files=[];for(const it of ready){const buf=new Uint8Array(await it.blob.arrayBuffer());files.push({name:it.name+'_cloaked.jpg',data:buf});}
+  const blob=zipStore(files),u=URL.createObjectURL(blob),a=document.createElement('a');
+  a.href=u;a.download='ai-cloak_'+Date.now()+'.zip';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),2000);
+  $('zip').disabled=false;$('zip').textContent='ดาวน์โหลด ZIP';
+};
+
+/* slider labels */
+$('fxAmt').oninput=e=>$('vFx').textContent=e.target.value+'%';
+$('eps').oninput=e=>$('vEps').textContent=e.target.value+' / 255';
+$('grid').oninput=e=>$('vGrid').textContent=e.target.value;
+$('tiles').oninput=e=>{$('vTiles').textContent=e.target.value+' × '+e.target.value;};
+$('wmSize').oninput=e=>$('vWmSize').textContent=e.target.value+'%';
+$('wmOp').oninput=e=>$('vWmOp').textContent=e.target.value+'%';
 })();
 </script>
 </body>
