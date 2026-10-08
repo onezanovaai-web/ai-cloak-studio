@@ -190,7 +190,7 @@
   <div class="results" id="results" hidden>
     <h2>ผลลัพธ์</h2>
     <p class="sub">แตะที่ภาพ หรือกดค้าง เพื่อดาวน์โหลดทีละรูป · หลายรูปใช้ปุ่ม ZIP ด้านบน</p>
-    <div class="grid" id="grid"></div>
+    <div class="grid" id="resgrid"></div>
   </div>
 
   <div class="note">
@@ -409,7 +409,7 @@ $('run').onclick=async()=>{
 
 function refresh(){$('count').textContent=items.length+' ภาพ';if(items.length){$('results').hidden=false;renderGrid();}else{$('results').hidden=true;}}
 function renderGrid(){
-  const g=$('grid');g.innerHTML='';
+  const g=$('resgrid');g.innerHTML='';
   items.forEach((it,idx)=>{
     const card=document.createElement('div');card.className='card';
     const done=!!it.out;
@@ -430,7 +430,7 @@ function renderGrid(){
 }
 function dlOne(it){const u=URL.createObjectURL(it.blob);const a=document.createElement('a');a.href=u;a.download=it.name+'_cloaked.jpg';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),1500);}
 
-$('clear').onclick=()=>{items=[];$('grid').innerHTML='';$('results').hidden=true;$('zip').disabled=true;refresh();};
+$('clear').onclick=()=>{items=[];$('resgrid').innerHTML='';$('results').hidden=true;$('zip').disabled=true;refresh();};
 
 /* ---------- ZIP (store, no deps) ---------- */
 const crcT=(()=>{const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c;}return t;})();
