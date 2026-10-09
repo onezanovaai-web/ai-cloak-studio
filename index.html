@@ -95,6 +95,26 @@
   .note b{color:var(--fg)}
   footer{margin-top:20px;color:var(--muted);font-size:.74rem;text-align:center}
   .themebtn{position:fixed;top:calc(10px + env(safe-area-inset-top,0px));right:12px;background:var(--panel);border:1px solid var(--line);color:var(--muted);border-radius:8px;padding:6px 10px;font-size:.74rem;cursor:pointer;z-index:9}
+  /* step headings + upscale */
+  .steph{display:flex;align-items:center;gap:9px;font-size:.95rem;font-weight:700;margin:0 0 12px}
+  .steph .no{width:24px;height:24px;border-radius:50%;background:var(--accent);color:#06140f;display:grid;place-items:center;font-size:.8rem;flex:0 0 auto}
+  .steph em{font-style:normal;font-weight:500;color:var(--muted);font-size:.78rem}
+  select{width:100%;background:var(--panel-2);border:1px solid var(--line);color:var(--fg);border-radius:9px;padding:9px 11px;font-family:var(--sans);font-size:.88rem}
+  .prog{height:6px;border-radius:99px;background:var(--panel-2);overflow:hidden;margin-top:10px}
+  .prog i{display:block;height:100%;width:0;background:var(--accent);transition:width .15s}
+  .upmsg{font-size:.8rem;color:var(--muted);margin-top:8px;min-height:1.2em}
+  .upmsg.warn{color:var(--accent-2)} .upmsg.err{color:var(--danger)}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  @media(max-width:520px){.two{grid-template-columns:1fr}}
+  .viewer{position:fixed;inset:0;background:rgba(0,0,0,.93);z-index:50;display:flex;flex-direction:column}
+  .viewer[hidden]{display:none}
+  .viewer .vbar{display:flex;gap:6px;flex-wrap:wrap;padding:10px;align-items:center}
+  .viewer .vbar button{font-family:var(--sans);font-size:.8rem;font-weight:600;background:#262a33;color:#e8eaf0;border:1px solid #3a4050;border-radius:8px;padding:7px 12px;cursor:pointer}
+  .viewer .vbar button.on{background:var(--accent);color:#06140f;border-color:var(--accent)}
+  .viewer .vinfo{color:#9aa3b2;font-size:.74rem;margin-left:auto;font-family:var(--mono)}
+  .viewer .vbox{flex:1;min-height:0;overflow:auto}
+  .viewer.fit .vbox img{width:100%;height:100%;object-fit:contain;display:block}
+  .viewer.full .vbox img{display:block;max-width:none;max-height:none}
   @media(max-width:640px){.grid{grid-template-columns:repeat(auto-fill,minmax(130px,1fr))}}
 </style>
 </head>
@@ -113,8 +133,36 @@
     <input type="file" id="file" accept="image/*" multiple hidden>
   </div>
 
+  <!-- STEP 1 : UPSCALE -->
+  <div class="panel" id="upPanel" hidden>
+    <div class="steph"><span class="no">1</span>อัปสเกลด้วย AI <em>ไม่บังคับ · ข้ามไปขั้น 2 ได้เลย</em></div>
+    <div class="two">
+      <div class="ctl">
+        <label>ขยายกี่เท่า <span class="val" id="vUpS">2×</span></label>
+        <div class="seg" id="upScale" style="margin-bottom:0"><button data-s="2" class="on">2×</button><button data-s="3">3×</button><button data-s="4">4×</button></div>
+      </div>
+      <div class="ctl">
+        <label>โมเดล</label>
+        <div class="seg" id="upModel" style="margin-bottom:0"><button data-m="medium" class="on">คมกว่า (~3MB)</button><button data-m="slim">เร็ว (~1MB)</button></div>
+      </div>
+    </div>
+    <div class="ctl" style="margin-top:12px">
+      <label>ไฟล์ที่โหลดเฉพาะอัปสเกล</label>
+      <select id="upFmt"><option value="jpg">JPG คุณภาพ 95%</option><option value="png">PNG (ไม่สูญเสีย ไฟล์ใหญ่)</option></select>
+    </div>
+    <div class="hint" id="upInfo" style="color:var(--muted);font-size:.78rem"></div>
+    <div class="bar" style="margin-top:12px">
+      <button class="act btn-primary" id="upRun">ยืนยันอัปสเกล</button>
+      <button class="act btn-zip" id="upZip" disabled>ZIP เฉพาะอัปสเกล</button>
+      <button class="act btn-ghost" id="upRevert" disabled>กลับขนาดเดิม</button>
+    </div>
+    <div class="prog" id="upProgBox" hidden><i id="upProg"></i></div>
+    <div class="upmsg" id="upMsg"></div>
+  </div>
+
   <!-- CONTROL PANEL (TOP) -->
   <div class="panel" id="panel" hidden>
+    <div class="steph"><span class="no">2</span>แต่งภาพ + กันเอไอ + ลายน้ำ <em>ใช้กับภาพที่อัปสเกลแล้ว หรือภาพต้นฉบับ</em></div>
     <div class="tabs">
       <button class="tab on" data-s="color">🎨 ฟิลเตอร์สี</button>
       <button class="tab" data-s="cloak">🛡️ กันเอไอ</button>
@@ -197,6 +245,16 @@
     <b>ชั้นกันเอไอเป็นชั้นเสริม ไม่ใช่เกราะรับประกัน:</b> Facebook บีบอัดภาพทุกใบ ชั้น noise บางส่วนจะหายไป โหมด “สลับช่อง” แรงที่สุดแต่กระทบสายตามนุษย์ด้วย สำหรับข้อมูลลับลูกค้าจริง ควรใช้คู่กับการปิดข้อมูลระบุตัวตนและช่องทางส่งที่เข้ารหัส
   </div>
   <footer>ประมวลผลบนเครื่องคุณทั้งหมด · วางบน GitHub Pages ได้ทันที</footer>
+</div>
+
+<div class="viewer fit" id="viewer" hidden>
+  <div class="vbar">
+    <button id="vBefore">ก่อน</button><button id="vAfter" class="on">หลังอัปสเกล</button>
+    <button id="vFit" class="on">พอดีจอ</button><button id="vFull">ขนาดจริง 100%</button>
+    <button id="vClose">ปิด ✕</button>
+    <span class="vinfo" id="vInfo"></span>
+  </div>
+  <div class="vbox" id="vBox"><img id="vImg" alt=""></div>
 </div>
 
 <script>
@@ -380,10 +438,10 @@ function addFiles(fl){
     // keep original pixel size (no downscale)
     const w=im.naturalWidth||im.width,h=im.naturalHeight||im.height;
     const c=document.createElement('canvas');c.width=w;c.height=h;c.getContext('2d').drawImage(im,0,0,w,h);
-    items.push({name:f.name.replace(/\.[^.]+$/,''),src:c,out:null,blob:null});
+    items.push({name:f.name.replace(/\.[^.]+$/,''),orig:c,src:c,up:null,out:null,blob:null});
     left--;if(left===0)refresh();
   };im.src=r.result;};r.readAsDataURL(f);});
-  $('panel').hidden=false;
+  $('panel').hidden=false;$('upPanel').hidden=false;
 }
 
 /* ---------- RUN ---------- */
@@ -408,7 +466,7 @@ $('run').onclick=async()=>{
   $('run').disabled=false;$('run').textContent='ประมวลผลทั้งหมด';$('zip').disabled=items.length===0;
 };
 
-function refresh(){$('count').textContent=items.length+' ภาพ';if(items.length){$('results').hidden=false;renderGrid();}else{$('results').hidden=true;}}
+function refresh(){$('count').textContent=items.length+' ภาพ';updateUpInfo();if(items.length){$('results').hidden=false;renderGrid();}else{$('results').hidden=true;}}
 function renderGrid(){
   const g=$('resgrid');g.innerHTML='';
   items.forEach((it,idx)=>{
@@ -421,7 +479,11 @@ function renderGrid(){
       const t=document.createElement('canvas');t.width=Math.max(1,Math.round(it.src.width*k));t.height=Math.max(1,Math.round(it.src.height*k));
       t.getContext('2d').drawImage(it.src,0,0,t.width,t.height);url=t.toDataURL('image/jpeg',0.8);
     }
-    card.innerHTML=`<div class="thumb"><img src="${url}"><div class="flash"></div>${done?'<button class="dlbtn">⬇ โหลด</button>':'<div class="badge">รอประมวลผล</div>'}</div><div class="nm">${it.name}${done?'_cloaked':''}.jpg</div>`;
+    const upExt=$('upFmt').value==='png'?'png':'jpg';
+    const badge=done?'':(it.up?`<div class="badge">อัปสเกล ×${it.up.scale} · ${it.src.width}×${it.src.height}</div>`:'<div class="badge">รอประมวลผล</div>');
+    const btn=(done||it.up)?'<button class="dlbtn">⬇ โหลด</button>':'';
+    const label=done?it.name+'_cloaked.jpg':(it.up?it.name+'_x'+it.up.scale+'.'+upExt:it.name+'.jpg');
+    card.innerHTML=`<div class="thumb"><img src="${url}"><div class="flash"></div>${btn}${badge}</div><div class="nm">${label}</div>`;
     if(done){
       const thumb=card.querySelector('.thumb'),flash=card.querySelector('.flash');
       const doDl=()=>{dlOne(it);flash.style.opacity=.5;setTimeout(()=>flash.style.opacity=0,120);};
@@ -431,13 +493,17 @@ function renderGrid(){
       thumb.addEventListener('pointermove',()=>{moved=true;});
       ['pointerup','pointerleave','pointercancel'].forEach(ev=>thumb.addEventListener(ev,()=>{if(timer){clearTimeout(timer);if(ev==='pointerup'&&!moved)doDl();timer=null;}}));
       thumb.addEventListener('contextmenu',e=>{e.preventDefault();doDl();});
+    }else if(it.up){
+      const thumb=card.querySelector('.thumb');
+      thumb.onclick=()=>openViewer(it);
+      card.querySelector('.dlbtn').onclick=e=>{e.stopPropagation();dlUp(it);};
     }
     g.appendChild(card);
   });
 }
 function dlOne(it){const u=URL.createObjectURL(it.blob);const a=document.createElement('a');a.href=u;a.download=it.name+'_cloaked.jpg';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),1500);}
 
-$('clear').onclick=()=>{items=[];$('resgrid').innerHTML='';$('results').hidden=true;$('zip').disabled=true;refresh();};
+$('clear').onclick=()=>{items=[];$('resgrid').innerHTML='';$('results').hidden=true;$('zip').disabled=true;$('upZip').disabled=true;$('upRevert').disabled=true;$('upMsg').textContent='';$('upMsg').className='upmsg';$('upProgBox').hidden=true;refresh();};
 
 /* ---------- ZIP (store, no deps) ---------- */
 const crcT=(()=>{const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c;}return t;})();
@@ -471,6 +537,177 @@ $('zip').onclick=async()=>{
   a.href=u;a.download='ai-cloak_'+Date.now()+'.zip';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),2000);
   $('zip').disabled=false;$('zip').textContent='ดาวน์โหลด ZIP';
 };
+
+/* ---------- STEP 1 : AI UPSCALE (UpscalerJS · ESRGAN, runs in-browser) ---------- */
+const CDN_J='https://cdn.jsdelivr.net/npm/',CDN_U='https://unpkg.com/';
+const LIBS={
+  tf:'@tensorflow/tfjs@4.11.0/dist/tf.min.js',
+  up:'upscaler@1.0.0/dist/browser/umd/upscaler.min.js',
+  model:(m,sc)=>`@upscalerjs/esrgan-${m}@1.0.0/dist/umd/models/esrgan-${m}/src/x${sc}/index.min.js`
+};
+const loaded={};
+function loadScript(path){
+  if(loaded[path])return loaded[path];
+  const tryUrl=u=>new Promise((res,rej)=>{const el=document.createElement('script');el.src=u;el.onload=res;el.onerror=()=>{el.remove();rej(new Error('load '+u));};document.head.appendChild(el);});
+  return loaded[path]=tryUrl(CDN_J+path).catch(()=>tryUrl(CDN_U+path)).catch(e=>{delete loaded[path];throw e;});
+}
+let upSc=2,upMd='medium',upBusy=false,upCancel=false;
+const upInst={};
+function modelGlobal(m,sc){return 'ESRGAN'+(m==='slim'?'Slim':'Medium')+sc+'x';}
+async function getUpscaler(m,sc){
+  const key=m+sc;if(upInst[key])return upInst[key];
+  await loadScript(LIBS.tf);await window.tf.ready();
+  await loadScript(LIBS.model(m,sc));await loadScript(LIBS.up);
+  const U=window.Upscaler&&window.Upscaler.default?window.Upscaler.default:window.Upscaler;
+  return upInst[key]=new U({model:window[modelGlobal(m,sc)]});
+}
+const CAP_MP=matchMedia('(pointer:coarse)').matches?36:80; // max output megapixels
+function canvasOK(w,h){try{const c=document.createElement('canvas');c.width=w;c.height=h;const x=c.getContext('2d');if(!x)return false;x.fillStyle='#000';x.fillRect(0,0,1,1);return x.getImageData(0,0,1,1).data[3]===255;}catch(e){return false;}}
+function pickScale(w,h,want){ // largest scale <= want that fits memory limits
+  for(let sc=want;sc>=2;sc--){if(w*h*sc*sc<=CAP_MP*1e6&&canvasOK(w*sc,h*sc))return sc;}
+  return 0;
+}
+function setUpMsg(t,cls){const m=$('upMsg');m.textContent=t;m.className='upmsg'+(cls?' '+cls:'');}
+function updateUpInfo(){
+  if(!$('upInfo'))return;
+  if(!items.length){$('upInfo').textContent='';return;}
+  const base=items[0].orig||items[0].src;
+  const w=base.width,h=base.height,sc=pickScale(w,h,upSc);
+  let t=`ภาพแรก ${w}×${h} → `+(sc?`${w*sc}×${h*sc} (${(w*h*sc*sc/1e6).toFixed(1)} MP)`:'ใหญ่เกินกว่าที่เครื่องนี้รองรับ');
+  if(sc&&sc<upSc)t+=` · ลดเหลือ ${sc}× อัตโนมัติ`;
+  if(items.length>1)t+=` · รวม ${items.length} ภาพ แต่ละภาพจะลดตัวคูณเองถ้าใหญ่เกิน`;
+  $('upInfo').textContent=t+' · ครั้งแรกต้องต่อเน็ตเพื่อโหลดโมเดล';
+}
+document.querySelectorAll('#upScale button').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('#upScale button').forEach(x=>x.classList.remove('on'));b.classList.add('on');
+  upSc=+b.dataset.s;$('vUpS').textContent=upSc+'×';updateUpInfo();
+});
+document.querySelectorAll('#upModel button').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('#upModel button').forEach(x=>x.classList.remove('on'));b.classList.add('on');upMd=b.dataset.m;
+});
+$('upFmt').onchange=()=>{if(items.some(i=>i.up))renderGrid();};
+
+async function upscaleCanvas(src,sc,up,onTile){
+  const W=src.width,H=src.height,T=window.__cloakTile||160,P=12,tf=window.tf;
+  const out=document.createElement('canvas');out.width=W*sc;out.height=H*sc;
+  const octx=out.getContext('2d');
+  const tile=document.createElement('canvas'),tctx=tile.getContext('2d');
+  const oc=document.createElement('canvas'),occ=oc.getContext('2d');
+  const cols=Math.ceil(W/T),rows=Math.ceil(H/T),total=cols*rows;let n=0;
+  for(let ty=0;ty<rows;ty++)for(let tx=0;tx<cols;tx++){
+    if(upCancel)throw new Error('cancel');
+    const x0=tx*T,y0=ty*T,w=Math.min(T,W-x0),h=Math.min(T,H-y0);
+    const ex0=Math.max(0,x0-P),ey0=Math.max(0,y0-P),ex1=Math.min(W,x0+w+P),ey1=Math.min(H,y0+h+P);
+    const tw=ex1-ex0,th=ey1-ey0;
+    tile.width=tw;tile.height=th;tctx.drawImage(src,ex0,ey0,tw,th,0,0,tw,th);
+    const t=await up.upscale(tile,{output:'tensor'});
+    const c=tf.tidy(()=>t.clipByValue(0,255).round().cast('int32'));
+    const px=await tf.browser.toPixels(c);
+    t.dispose();c.dispose();
+    oc.width=tw*sc;oc.height=th*sc;occ.putImageData(new ImageData(px,tw*sc,th*sc),0,0);
+    octx.drawImage(oc,(x0-ex0)*sc,(y0-ey0)*sc,w*sc,h*sc,x0*sc,y0*sc,w*sc,h*sc);
+    n++;onTile(n/total);
+    if(n%2===0)await new Promise(r=>setTimeout(r,0));
+  }
+  return out;
+}
+function setProg(f){$('upProg').style.width=Math.round(f*100)+'%';}
+
+$('upRun').onclick=async()=>{
+  if(upBusy){upCancel=true;return;}
+  if(!items.length)return;
+  upBusy=true;upCancel=false;
+  const btn=$('upRun');btn.textContent='ยกเลิก';
+  $('upProgBox').hidden=false;setProg(0);setUpMsg('กำลังโหลดโมเดล…');
+  let okN=0,skipN=0,lowered=0;
+  try{
+    // Always start from the originals so re-running never stacks upscales
+    const todo=items.map(it=>({it,sc:pickScale(it.orig.width,it.orig.height,upSc)}));
+    const models={};
+    for(const t of todo){if(t.sc&&!models[t.sc])models[t.sc]=await getUpscaler(upMd,t.sc);}
+    const be=window.tf.getBackend();
+    if(be!=='webgl'&&be!=='webgpu'&&!window.__cloakAllowCpu)throw new Error('เบราว์เซอร์/เครื่องนี้ไม่รองรับ WebGL จึงอัปสเกลด้วย AI ไม่ได้ (ช้าเกินใช้งานจริง) — ลองเปิดด้วย Chrome หรือเปิด hardware acceleration');
+    for(let i=0;i<todo.length;i++){
+      const {it,sc}=todo[i];
+      if(!sc){skipN++;continue;}
+      if(sc<upSc)lowered++;
+      setUpMsg(`กำลังอัปสเกลภาพ ${i+1}/${todo.length} (${it.orig.width}×${it.orig.height} → ×${sc})`);
+      const out=await upscaleCanvas(it.orig,sc,models[sc],f=>setProg((i+f)/todo.length));
+      it.up={scale:sc,model:upMd};it.src=out;it.out=null;it.blob=null;okN++;
+      renderGrid();
+    }
+    setProg(1);$('zip').disabled=!items.some(i=>i.blob);
+    let msg=`เสร็จ ${okN} ภาพ — แตะที่ภาพด้านล่างเพื่อดูเทียบก่อน/หลัง แล้วไปขั้น 2 ต่อได้เลย`;
+    if(lowered)msg+=` (${lowered} ภาพลดตัวคูณอัตโนมัติ)`;
+    if(skipN)msg+=` · ข้าม ${skipN} ภาพที่ใหญ่เกินเครื่องรองรับ`;
+    setUpMsg(msg,skipN?'warn':'');
+  }catch(e){
+    if(e&&e.message==='cancel')setUpMsg('ยกเลิกแล้ว ภาพที่เสร็จก่อนหน้ายังอยู่','warn');
+    else{console.error(e);setUpMsg('อัปสเกลไม่สำเร็จ: '+((e&&e.message)||e)+' (ถ้าเพิ่งเปิดครั้งแรก ตรวจว่าต่อเน็ตอยู่ แล้วลองใหม่)','err');}
+  }finally{
+    upBusy=false;btn.textContent='ยืนยันอัปสเกล';
+    $('upZip').disabled=!items.some(i=>i.up);$('upRevert').disabled=!items.some(i=>i.up);
+    renderGrid();
+  }
+};
+$('upRevert').onclick=()=>{
+  if(upBusy)return;
+  items.forEach(it=>{it.src=it.orig;it.up=null;it.out=null;it.blob=null;});
+  $('upZip').disabled=true;$('upRevert').disabled=true;$('zip').disabled=true;$('upProgBox').hidden=true;
+  setUpMsg('กลับเป็นขนาดเดิมแล้ว');renderGrid();updateUpInfo();
+};
+
+/* download upscaled-only */
+function upBlob(canvas){
+  const png=$('upFmt').value==='png';
+  return new Promise(res=>canvas.toBlob(res,png?'image/png':'image/jpeg',png?undefined:0.95));
+}
+async function dlUp(it){
+  const b=await upBlob(it.src),u=URL.createObjectURL(b),a=document.createElement('a');
+  a.href=u;a.download=it.name+'_x'+it.up.scale+'.'+($('upFmt').value==='png'?'png':'jpg');
+  document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),1500);
+}
+$('upZip').onclick=async()=>{
+  const ready=items.filter(it=>it.up);if(!ready.length)return;
+  const z=$('upZip');z.disabled=true;z.textContent='กำลังรวม…';
+  try{
+    const ext=$('upFmt').value==='png'?'png':'jpg',files=[];
+    for(const it of ready){const b=await upBlob(it.src);files.push({name:it.name+'_x'+it.up.scale+'.'+ext,data:new Uint8Array(await b.arrayBuffer())});}
+    const blob=zipStore(files),u=URL.createObjectURL(blob),a=document.createElement('a');
+    a.href=u;a.download='upscaled_'+Date.now()+'.zip';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),2000);
+  }finally{z.disabled=false;z.textContent='ZIP เฉพาะอัปสเกล';}
+};
+
+/* before/after viewer */
+let vItem=null,vUrls={},vMode='after',vFit=true;
+const viewer=$('viewer'),vImg=$('vImg');
+async function openViewer(it){
+  vItem=it;vUrls={};vMode='after';vFit=true;
+  viewer.hidden=false;vInfoSet('กำลังเตรียมภาพ…');
+  const [a,b]=await Promise.all([new Promise(r=>it.src.toBlob(r,'image/jpeg',0.95)),new Promise(r=>it.orig.toBlob(r,'image/jpeg',0.95))]);
+  if(vItem!==it)return;
+  vUrls={after:URL.createObjectURL(a),before:URL.createObjectURL(b)};
+  vShow();
+}
+function vInfoSet(t){$('vInfo').textContent=t;}
+function vShow(){
+  if(!vItem||!vUrls.after)return;
+  vImg.src=vUrls[vMode];
+  viewer.classList.toggle('fit',vFit);viewer.classList.toggle('full',!vFit);
+  // 100% mode: draw "before" at the same pixel size as "after" so the comparison is fair
+  vImg.style.width=vFit?'':vItem.src.width+'px';
+  vImg.style.height=vFit?'':vItem.src.height+'px';
+  $('vBefore').classList.toggle('on',vMode==='before');$('vAfter').classList.toggle('on',vMode==='after');
+  $('vFit').classList.toggle('on',vFit);$('vFull').classList.toggle('on',!vFit);
+  vInfoSet((vMode==='before'?'ก่อน '+vItem.orig.width+'×'+vItem.orig.height:'หลัง '+vItem.src.width+'×'+vItem.src.height));
+}
+$('vBefore').onclick=()=>{vMode='before';vShow();};
+$('vAfter').onclick=()=>{vMode='after';vShow();};
+$('vFit').onclick=()=>{vFit=true;vShow();};
+$('vFull').onclick=()=>{vFit=false;vShow();};
+function closeViewer(){viewer.hidden=true;Object.values(vUrls).forEach(u=>URL.revokeObjectURL(u));vUrls={};vItem=null;vImg.removeAttribute('src');}
+$('vClose').onclick=closeViewer;
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!viewer.hidden)closeViewer();});
 
 /* slider labels */
 $('fxAmt').oninput=e=>$('vFx').textContent=e.target.value+'%';
