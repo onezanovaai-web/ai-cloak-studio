@@ -377,7 +377,8 @@ file.onchange=e=>addFiles(e.target.files);
 function addFiles(fl){
   const arr=[...fl].filter(f=>f.type.startsWith('image/'));let left=arr.length;if(!left)return;
   arr.forEach(f=>{const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{
-    const MAX=2048;let w=im.width,h=im.height;if(Math.max(w,h)>MAX){const s=MAX/Math.max(w,h);w=Math.round(w*s);h=Math.round(h*s);}
+    // keep original pixel size (no downscale)
+    const w=im.naturalWidth||im.width,h=im.naturalHeight||im.height;
     const c=document.createElement('canvas');c.width=w;c.height=h;c.getContext('2d').drawImage(im,0,0,w,h);
     items.push({name:f.name.replace(/\.[^.]+$/,''),src:c,out:null,blob:null});
     left--;if(left===0)refresh();
@@ -413,7 +414,13 @@ function renderGrid(){
   items.forEach((it,idx)=>{
     const card=document.createElement('div');card.className='card';
     const done=!!it.out;
-    const url=done?URL.createObjectURL(it.blob):it.src.toDataURL('image/jpeg',0.8);
+    let url;
+    if(done){url=URL.createObjectURL(it.blob);}
+    else{ // small preview only; the real image stays full size
+      const k=Math.min(1,640/Math.max(it.src.width,it.src.height));
+      const t=document.createElement('canvas');t.width=Math.max(1,Math.round(it.src.width*k));t.height=Math.max(1,Math.round(it.src.height*k));
+      t.getContext('2d').drawImage(it.src,0,0,t.width,t.height);url=t.toDataURL('image/jpeg',0.8);
+    }
     card.innerHTML=`<div class="thumb"><img src="${url}"><div class="flash"></div>${done?'<button class="dlbtn">⬇ โหลด</button>':'<div class="badge">รอประมวลผล</div>'}</div><div class="nm">${it.name}${done?'_cloaked':''}.jpg</div>`;
     if(done){
       const thumb=card.querySelector('.thumb'),flash=card.querySelector('.flash');
